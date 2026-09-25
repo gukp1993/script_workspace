@@ -23,9 +23,16 @@ import hashlib
 import random
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
+from arena_lab.faults import (
+    FaultPlan,
+    check_fault_plan,
+    fault_events,
+    occlusion_rects_at,
+)
 from arena_lab.oracle import OracleTrace
 from arena_lab.render import Renderer, SceneConfig, SceneState
 
@@ -220,19 +227,28 @@ class ScenarioRun:
     frame_hashes: tuple[str, ...]
     trace: OracleTrace
     frames: tuple[np.ndarray, ...] | None = field(default=None, compare=False)
+    # 注入的故障计划（LAB-006）；None = 无故障（M0 行为）。
+    faults: FaultPlan | None = None
 
     @property
     def frame_count(self) -> int:
         return len(self.states)
 
     def iter_frames(self) -> Iterator[np.ndarray]:
-        """逐帧产出画面（优先返回已保留帧，否则用 Renderer 确定性重渲染）。"""
+        """逐帧产出画面（优先返回已保留帧，否则用 Renderer 确定性重渲染）。
+
+        带遮挡故障的运行在重渲染时按帧的场景时间
+        （= frame_index / fps）重新计算遮挡矩形，与首次渲染逐字节一致。
+        """
         if self.frames is not None:
             yield from self.frames
             return
         renderer = Renderer(self.config)
-        for state in self.states:
-            yield renderer.render(state)
+        for index, state in enumerate(self.states):
+            occlusion = occlusion_rects_at(
+                self.faults, index / self.fps, self.config.resolution
+            )
+            yield renderer.render(state, occlusion=occlusion)
 
 
 def run_scenario(
@@ -244,11 +260,20 @@ def run_scenario(
     *,
     ui_scale: float = 1.0,
     with_frames: bool = False,
+    faults: FaultPlan | None = None,
 ) -> ScenarioRun:
     """执行内置场景：按 fps 生成帧序列 + OracleTrace（完全确定性）。
 
     同 (name, seed, resolution, fps, duration_s) 两次调用 -> 逐帧哈希一致；
     不同 seed -> 至少部分帧哈希不同（事件抖动 + 渲染种子色调）。
+
+    ``faults``（LAB-006，可选）：注入 :class:`FaultPlan` 描述的故障——
+
+    - 遮挡窗口内每帧在最上层叠加确定性纯色矩形（帧哈希与无故障不同）；
+    - 掉帧窗口内 Oracle 帧时间戳间隔拉大到 ``1 / fps_drop_to``，帧内容
+      （状态与像素哈希）与无故障运行逐字节一致；
+    - 故障起止作为离散事件写入 Oracle，并在 ``trace.meta["faults"]``
+      记录计划描述。默认 ``None`` 时行为与不传完全一致（向后兼容）。
     """
     builder = BUILTIN_SCENARIOS.get(name)
     if builder is None:
@@ -259,37 +284,49 @@ def run_scenario(
         raise ValueError(f"fps 必须为正数，收到 {fps!r}")
     if not (duration > 0.0):
         raise ValueError(f"duration_s 必须为正数，收到 {duration!r}")
+    check_fault_plan(faults, duration, fps)
 
     config = SceneConfig(seed=seed, resolution=resolution, ui_scale=ui_scale)
     plan = builder(random.Random(int(seed)), duration)
     renderer = Renderer(config)
     frame_count = max(1, int(round(duration * fps)))
-    trace = OracleTrace(
-        meta={
-            "scenario": name,
-            "seed": int(seed),
-            "fps": fps,
-            "duration_s": duration,
-            "resolution": [config.resolution[0], config.resolution[1]],
-            "ui_scale": config.ui_scale,
-            "frame_count": frame_count,
-        }
-    )
+    meta: dict[str, Any] = {
+        "scenario": name,
+        "seed": int(seed),
+        "fps": fps,
+        "duration_s": duration,
+        "resolution": [config.resolution[0], config.resolution[1]],
+        "ui_scale": config.ui_scale,
+        "frame_count": frame_count,
+    }
+    if faults is not None:
+        meta["faults"] = faults.describe()
+    trace = OracleTrace(meta=meta)
 
     states: list[SceneState] = []
     frame_hashes: list[str] = []
     frames: list[np.ndarray] | None = [] if with_frames else None
+    # 帧时间戳游标：默认与场景时间重合（t = index / fps）；掉帧窗口内
+    # 间隔拉大，使记录时间与内容真值时间分离（内容仍取 index / fps）。
+    t_cursor = 0.0
     for index in range(frame_count):
         t = index / fps
         state = plan.state_at(t, index)
-        trace.record_frame(t, state)
-        frame = renderer.render(state)
+        trace.record_frame(t_cursor, state)
+        frame = renderer.render(
+            state, occlusion=occlusion_rects_at(faults, t, config.resolution)
+        )
         frame_hashes.append(hashlib.sha256(frame.tobytes()).hexdigest())
         states.append(state)
         if frames is not None:
             frames.append(frame)
+        interval = 1.0 / fps
+        if faults is not None and faults.fps_drop_active(t):
+            interval = 1.0 / faults.fps_drop_to
+        t_cursor += interval
 
-    for t_event, event_name in sorted(plan.events, key=lambda item: item[0]):
+    events = sorted(plan.events + fault_events(faults), key=lambda item: item[0])
+    for t_event, event_name in events:
         trace.record_event(event_name, t_event)
 
     return ScenarioRun(
@@ -302,4 +339,5 @@ def run_scenario(
         frame_hashes=tuple(frame_hashes),
         trace=trace,
         frames=tuple(frames) if frames is not None else None,
+        faults=faults,
     )

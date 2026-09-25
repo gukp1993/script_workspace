@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
 
 from arena_lab.render import SceneState
@@ -147,6 +148,45 @@ class OracleTrace:
         )
 
     # ---- 序列化 ----------------------------------------------------------
+
+    def save(self, path: str | Path) -> Path:
+        """导出为 JSON 文件（utf-8，父目录自动创建）；返回写入路径。
+
+        文件内容即 :meth:`to_json` 的确定性文本，可用 :meth:`load` 往返还原。
+        """
+        target = Path(path)
+        if target.parent != Path(""):
+            target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(self.to_json(), encoding="utf-8")
+        return target
+
+    @classmethod
+    def load(cls, path: str | Path) -> OracleTrace:
+        """从 :meth:`save` 写出的 JSON 文件还原 OracleTrace（LAB-007）。"""
+        return cls.from_json(Path(path).read_text(encoding="utf-8"))
+
+    def export_summary(self) -> dict[str, Any]:
+        """导出运行摘要（LAB-007）：事件计数、时长、帧数、输入数。
+
+        - ``event_counts``：按事件名聚合计数（键按字典序，确定性输出）；
+        - ``duration_s``：帧与事件覆盖的最长时间（空轨迹为 0.0）；
+        - ``frame_count`` / ``event_count`` / ``input_count``：记录条数。
+        """
+        counts: dict[str, int] = {}
+        for event in self._events:
+            counts[event.name] = counts.get(event.name, 0) + 1
+        duration = 0.0
+        if self._frames:
+            duration = max(duration, self._frames[-1].t_monotonic)
+        if self._events:
+            duration = max(duration, self._events[-1].t_monotonic)
+        return {
+            "frame_count": len(self._frames),
+            "event_count": len(self._events),
+            "input_count": len(self._inputs),
+            "duration_s": duration,
+            "event_counts": dict(sorted(counts.items())),
+        }
 
     def to_json(self) -> str:
         """导出为确定性 JSON 文本（排序键，可直接 json.loads 往返）。"""

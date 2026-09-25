@@ -1,0 +1,29 @@
+{
+  "name": "workbench_ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "VAW 前台视觉自动化工作台前端（ENG-003，UI-002/003/004/012 基础版）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^30.1.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.11"
+  }
+}

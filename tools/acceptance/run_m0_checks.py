@@ -9,7 +9,8 @@
   [3] Schema 反例  —— protected_online 反例被拒绝且给出规则 ID（POL-003/SAFE-020）
   [4] ArenaLab     —— 固定种子确定性帧序列自检（LAB-001/004）
   [5] 策略安全     —— Shadow/错窗/过期/预算/硬锁场景演示通过（POL/INP/SAFE-004/020）
-  [6] 静态守卫     —— M0 全仓禁止任何真实输入调用（GOV-001/SEC-001）
+  [6] 静态守卫     —— 真实输入库全仓禁止；系统级绑定按 M1 allowlist 精确放行
+                      （GOV-001/SEC-001；M1 起与 run_m1_checks 共用同一规则）
 """
 
 from __future__ import annotations
@@ -28,18 +29,26 @@ SUBPROCESS_ENV = {
     "PYTHONPATH": os.pathsep.join(["packages", "services", "apps"]),
 }
 
-# M0 阶段禁止出现的真实输入/越权模块（SEC-001、架构不变量 1/2/8）
-FORBIDDEN_IMPORTS = (
-    "pyautogui",
-    "pydirectinput",
-    "pynput",
-    "win32api",
-    "win32gui",
-    "win32con",
-    "ctypes",
-    "keyboard",
-    "mouse",
+# 静态守卫（SEC-001、架构不变量 1/2/8）。M1 起按 allowlist 精确放行：
+# - ctypes 允许且仅允许出现在 input_broker 的三个 Win32 绑定文件
+#   （SendInput / 热键 / 看门狗——全平台唯一的系统调用集中地）；
+# - win32api/win32gui/win32con/win32process/pywintypes 允许且仅允许出现在
+#   services/window_service/ 目录内（当前集中于 enumerate_win.py）；
+# - pyautogui/pydirectinput/pynput/keyboard/mouse 仍然全仓禁止（含上述文件）。
+FORBIDDEN_EVERYWHERE = ("pyautogui", "pydirectinput", "pynput", "keyboard", "mouse")
+FORBIDDEN_WIN32 = ("win32api", "win32gui", "win32con", "win32process", "pywintypes")
+
+#: ctypes 的精确白名单（相对 POSIX 路径）。
+CTYPES_ALLOWLIST = frozenset(
+    {
+        "services/input_broker/win32_adapter.py",
+        "services/input_broker/win32_hotkey.py",
+        "services/input_broker/win32_watchdog.py",
+    }
 )
+#: win32* 系模块的精确白名单目录（目录内文件放行）。
+WIN32_ALLOWLIST_DIR = "services/window_service/"
+
 SCAN_DIRS = ("packages", "services", "apps")
 SCAN_EXCLUDE = {"__pycache__"}  # 排除的目录名
 
@@ -60,20 +69,47 @@ def run(cmd: list[str], name: str, expect_zero: bool = True) -> tuple[bool, str]
 
 
 def static_guard() -> tuple[bool, str]:
-    """扫描源码 import，禁止真实输入与越权模块；允许注释中提及。"""
+    """扫描源码 import，禁止真实输入与越权模块；允许注释中提及。
+
+    规则（M1 allowlist）：
+    - pyautogui/pydirectinput/pynput/keyboard/mouse：全仓禁止；
+    - ctypes：仅允许 CTYPES_ALLOWLIST 中列出的三个 Win32 绑定文件；
+    - win32api/win32gui/win32con/win32process/pywintypes：仅允许
+      services/window_service/ 目录内的文件；
+    - 白名单之外任何文件出现这些 import 一律 FAIL。
+    """
     violations: list[str] = []
     pattern = re.compile(
-        r"^\s*(?:import|from)\s+(" + "|".join(FORBIDDEN_IMPORTS) + r")\b", re.MULTILINE
+        r"^\s*(?:import|from)\s+("
+        + "|".join(FORBIDDEN_EVERYWHERE + FORBIDDEN_WIN32 + ("ctypes",))
+        + r")\b",
+        re.MULTILINE,
     )
     for scan_dir in SCAN_DIRS:
         for path in (ROOT / scan_dir).rglob("*.py"):
             if SCAN_EXCLUDE & set(path.parts):
                 continue
+            rel = path.relative_to(ROOT).as_posix()
             for match in pattern.finditer(path.read_text(encoding="utf-8", errors="replace")):
-                violations.append(f"{path.relative_to(ROOT)}: import {match.group(1)}")
+                module = match.group(1)
+                if module == "ctypes":
+                    if rel not in CTYPES_ALLOWLIST:
+                        violations.append(
+                            f"{rel}: import ctypes（仅允许 {sorted(CTYPES_ALLOWLIST)}）"
+                        )
+                elif module in FORBIDDEN_WIN32:
+                    if not rel.startswith(WIN32_ALLOWLIST_DIR):
+                        violations.append(
+                            f"{rel}: import {module}（仅允许 {WIN32_ALLOWLIST_DIR} 目录内）"
+                        )
+                else:
+                    violations.append(f"{rel}: import {module}")
     if violations:
         return False, "发现禁止的 import：\n  " + "\n  ".join(violations)
-    return True, "未发现真实输入/越权模块 import"
+    return True, (
+        "未发现越权 import；ctypes 仅限三处 Win32 绑定文件，"
+        "win32* 仅限 window_service，真实输入库全仓禁止"
+    )
 
 
 def main() -> int:

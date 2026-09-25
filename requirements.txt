@@ -9,3 +9,13 @@ pillow==12.3.0
 pydantic==2.13.5
 opencv-python==5.0.0.93
 pytest==9.1.1
+
+# --- M1（安全闭环）新增 ---
+pywin32==312
+dxcam==0.3.0
+mss==10.2.0
+pywebview==6.2.1
+fastapi==0.141.1
+uvicorn==0.52.4
+websockets==17.1
+httpx==0.28.1

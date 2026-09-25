@@ -16,6 +16,7 @@ RGB uint8 图像。核心契约（LAB-001 验收）：
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -30,6 +31,7 @@ __all__ = [
     "COLOR_HEALTH_HIGH",
     "COLOR_RESOURCE_FILL",
     "COLOR_PROGRESS_FILL",
+    "COLOR_OCCLUSION",
 ]
 
 # 矩形 (x0, y0, x1, y1)，半开区间 [x0, x1) x [y0, y1)，像素坐标。
@@ -72,6 +74,8 @@ COLOR_POPUP_TITLE: tuple[int, int, int] = (120, 124, 140)
 COLOR_POPUP_TEXT: tuple[int, int, int] = (120, 124, 138)
 COLOR_POPUP_BTN_OK: tuple[int, int, int] = (90, 160, 90)
 COLOR_POPUP_BTN_CANCEL: tuple[int, int, int] = (170, 90, 90)
+# 遮挡注入（LAB-006）：叠加在整帧最上层的纯色遮挡块（与其他元素色均显著不同）。
+COLOR_OCCLUSION: tuple[int, int, int] = (16, 16, 20)
 
 # 内置 3x5 位图字体（'#' 为实心像素）：仅覆盖本模块用到的字符，
 # 不依赖系统字体，保证文字渲染跨运行/跨机器逐字节确定。
@@ -331,22 +335,30 @@ class Renderer:
 
     # ---- 渲染 ------------------------------------------------------------
 
-    def render(self, state: SceneState) -> np.ndarray:
-        """渲染一帧：返回 (H, W, 3) uint8 RGB 数组（纯函数，无副作用）。"""
+    def render(self, state: SceneState, *, occlusion: Sequence[Rect] = ()) -> np.ndarray:
+        """渲染一帧：返回 (H, W, 3) uint8 RGB 数组（纯函数，无副作用）。
+
+        ``occlusion`` 为可选遮挡矩形序列（LAB-006 故障注入）：按给定顺序
+        叠加在整帧**最上层**（含弹窗/加载画面之上）。默认为空——既有调用
+        ``render(state)`` 行为逐字节不变（M0 向后兼容）。
+        """
         frame = self._render_background()
         if state.loading_active:
             self._render_loading(frame, state)
-            return frame
-        self._render_header(frame, state)
-        self._render_bar(frame, self._health_slot, state.health_ratio, health_color(state.health_ratio))
-        self._render_bar(frame, self._resource_slot, state.resource_ratio, COLOR_RESOURCE_FILL)
-        self._render_cooldown_icons(frame, state.cooldown_ready)
-        if state.loot_present:
-            self._render_loot(frame)
-        if state.target_present:
-            self._render_target(frame)
-        if state.popup_open:
-            self._render_popup(frame)
+        else:
+            self._render_header(frame, state)
+            self._render_bar(frame, self._health_slot, state.health_ratio, health_color(state.health_ratio))
+            self._render_bar(frame, self._resource_slot, state.resource_ratio, COLOR_RESOURCE_FILL)
+            self._render_cooldown_icons(frame, state.cooldown_ready)
+            if state.loot_present:
+                self._render_loot(frame)
+            if state.target_present:
+                self._render_target(frame)
+            if state.popup_open:
+                self._render_popup(frame)
+        # 遮挡最后叠加：模拟其他窗口/悬浮物盖住画面（确定性纯色填充）。
+        for rect in occlusion:
+            _fill_rect(frame, rect, COLOR_OCCLUSION)
         return frame
 
     def _render_background(self) -> np.ndarray:
