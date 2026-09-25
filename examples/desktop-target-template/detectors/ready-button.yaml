@@ -1,0 +1,9 @@
+# 检测器示例：就绪按钮（模板匹配，替换模板图与 ROI 为真实目标截图）
+schema_version: 1
+detector_id: ready-button
+type: template_match
+roi: [0.40, 0.10, 0.20, 0.08]
+threshold: 0.88
+stable_frames: 2
+field_name: ready_button
+template: assets/templates/ready-button.png

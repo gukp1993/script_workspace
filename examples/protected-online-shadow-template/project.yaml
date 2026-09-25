@@ -1,0 +1,6 @@
+# 受保护在线目标 Shadow 模板（ADP-002，M5）
+# 仅观察 / 标注 / 回放 / Shadow Mode；禁止真实输入与无人值守。
+schema_version: 1
+name: protected-online-shadow-template
+description: 受保护在线目标 Shadow 模板（mode 硬编码 shadow，无人值守硬编码 disabled）
+notes: policy 的 mode 与 unattended_schedule 为硬锁语义；改成 real_input 或 enabled 会被校验器拒绝。

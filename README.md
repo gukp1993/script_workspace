@@ -48,11 +48,22 @@ pytest 通过 `pythonpath = ["packages", "services", "apps"]` 注入路径：
 
 ## 里程碑
 
-| 里程碑 | 状态 |
-|---|---|
-| M0 边界与测试场 | 进行中 |
-| M1 安全闭环 | 未开始 |
-| M2 可测试自动化 | 未开始 |
-| M3 可发布工作台 | 未开始 |
+| 里程碑 | 状态 | 验收门 |
+|---|---|---|
+| M0 边界与测试场 | ✅ 完成 | `python tools/acceptance/run_m0_checks.py`（6/6） |
+| M1 安全闭环 | ✅ 完成 | `python tools/acceptance/run_m1_checks.py`（8/8） |
+| M2 可测试自动化 | ✅ 完成 | `python tools/acceptance/run_m2_checks.py`（9/9） |
+| M3 可发布工作台 | ✅ 完成 | `python tools/acceptance/run_m3_checks.py`（8/8，递归含 M0-M2） |
+| M4 易用性增强 | ✅ 核心完成* | `python tools/acceptance/run_m45_checks.py` |
+| M5 受控适配 | ✅ 核心完成* | 同上 |
 
-规划与验收依据见仓库根目录两份设计文档。
+\* M4 节点编辑器为自研 SVG 实现（不引 Rete.js，ADR 级偏差见代码 docstring）；
+扩展内存硬限额（Job Object）、PLG-003 撤销 UI、8 小时长稳与 UAT 签字属后续运维事项。
+
+## 安全边界（摘要）
+
+- 全平台唯一系统输入入口：`services/input_broker/win32_adapter.py`（SendInput）；
+  静态守卫强制 `ctypes`/`win32*` 仅存在于白名单文件。
+- 一切动作先成为 `InputIntent`，经 `policy_engine`（默认拒绝 + protected_online 硬锁）
+  与 `InputBroker`（每批复核前台/TTL/预算/急停释放）才可执行。
+- 错误窗口、Shadow/DryRun、失焦、急停、父进程退出 → 真实输入恒为 0（SAFE-001~022 矩阵）。

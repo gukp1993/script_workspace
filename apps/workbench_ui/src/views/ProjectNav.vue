@@ -1,13 +1,30 @@
 <script setup lang="ts">
 /**
- * 项目导航与对象树（UI-002 基础版）。
+ * 项目导航与对象树（UI-002 基础版 + M3 E11 页面导航）。
  *
  * 顶部项目选择/创建，下方按 目标/策略/检测器/状态机/标定 五类懒加载
- * 对象列表（点击种类标题拉取）。会话导航由底部控制条与目标选择页承担。
+ * 对象列表（点击种类标题拉取）。会话导航由底部控制条与目标选择页承担；
+ * 中部为工作台页面入口（RouterLink，键盘可达）。
  */
 import { onMounted, ref } from 'vue'
 
 import { NAV_KINDS, objectLabel, useProjectStore } from '../stores/project'
+
+/** 工作台页面入口（UI-017：全部页面可经左侧导航到达） */
+const PAGE_LINKS: ReadonlyArray<{ to: string; label: string }> = [
+  { to: '/targets', label: '目标选择' },
+  { to: '/preview', label: '实时预览' },
+  { to: '/assets', label: '资产库' },
+  { to: '/detectors', label: '检测器编辑' },
+  { to: '/calibration', label: '标定向导' },
+  { to: '/machines', label: '状态机编辑' },
+  { to: '/graph', label: '状态图' },
+  { to: '/graph-edit', label: '节点编辑' },
+  { to: '/inspector', label: '会话检视' },
+  { to: '/timeline', label: '时间轴' },
+  { to: '/tests', label: '测试中心' },
+  { to: '/settings', label: '设置' },
+]
 
 const store = useProjectStore()
 const newProjectId = ref('')
@@ -61,6 +78,15 @@ async function createProject(): Promise<void> {
         <input v-model="newProjectName" placeholder="名称" aria-label="新项目名称" />
         <button type="submit" :disabled="!newProjectId.trim()">创建</button>
       </form>
+    </section>
+
+    <section class="pages">
+      <h3>页面</h3>
+      <ul>
+        <li v-for="link in PAGE_LINKS" :key="link.to">
+          <RouterLink class="page-link" :to="link.to" active-class="active">{{ link.label }}</RouterLink>
+        </li>
+      </ul>
     </section>
 
     <section class="tree">
@@ -124,6 +150,23 @@ ul {
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
+}
+.page-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  color: #cbd5e1;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.page-link:hover {
+  background: #1e293b;
+}
+.page-link.active {
+  background: #1d4ed855;
+  color: #e2e8f0;
+  border-left: 3px solid #3b82f6;
 }
 .caret {
   width: 12px;

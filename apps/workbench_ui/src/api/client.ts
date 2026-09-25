@@ -145,6 +145,11 @@ function currentOrigin(): string {
 
 /** 抓取预览帧（二进制 JPEG；apiFetch 之外的旁路，同样带令牌） */
 export async function fetchPreviewShot(path: string, options: ApiFetchOptions = {}): Promise<Blob> {
+  return fetchBinary(path, options)
+}
+
+/** 通用带令牌二进制 GET（帧图/资产内容等 blob 旁路；非 2xx 抛 ApiError） */
+export async function fetchBinary(path: string, options: ApiFetchOptions = {}): Promise<Blob> {
   const {
     params,
     tokenQuery,
@@ -164,6 +169,136 @@ export async function fetchPreviewShot(path: string, options: ApiFetchOptions = 
   })
   if (!response.ok) throw await toApiError(response)
   return await response.blob()
+}
+
+// ---------------------------------------------------------------------------
+// M3 E11 端点封装：轨迹 / 帧 / 回放报告（UI-013/014/015）与设置（UI-016）
+// ---------------------------------------------------------------------------
+
+/** 轨迹文件概览行（control_plane.traces.list_traces） */
+export interface TraceSummary {
+  name: string
+  size_bytes: number
+  modified_at: string
+  event_count: number
+}
+
+export interface TraceListResponse {
+  project_id: string
+  traces: TraceSummary[]
+  count: number
+}
+
+/** 轨迹事件（trace_format.TraceEvent.to_dict） */
+export interface TraceEventRecord {
+  seq: number
+  ts_monotonic: number
+  correlation_id: string
+  session_id: string
+  type: string
+  payload: Record<string, unknown>
+  prev_hash: string
+  hash: string
+}
+
+export interface TraceEventsResponse {
+  project_id: string
+  trace: string
+  events: TraceEventRecord[]
+  returned: number
+  matched: number
+  total: number
+  truncated_tail: boolean
+  error_count: number
+}
+
+/** 事件过滤参数（语义与 control_plane.traces / query_timeline 对齐） */
+export interface TraceEventsParams {
+  since?: number
+  until?: number
+  /** 逗号分隔的事件类型 */
+  types?: string
+  state?: string
+  limit?: number
+}
+
+/** 回放/差异报告概览行 */
+export interface ReplayReportSummary {
+  name: string
+  rel_path: string
+  size_bytes: number
+  modified_at: string
+  preview: string
+}
+
+export interface ReplayReportsResponse {
+  project_id: string
+  reports: ReplayReportSummary[]
+  count: number
+}
+
+/** 工作区设置（CTL-008） */
+export interface WorkbenchSettings {
+  default_mode: string
+  trace_retention_days: number
+  unattended_schedule: string
+}
+
+/** 列出项目 traces/ 目录下的轨迹文件 */
+export function listProjectTraces(projectId: string, options: ApiFetchOptions = {}): Promise<TraceListResponse> {
+  return apiFetch<TraceListResponse>(`/api/v1/projects/${projectId}/traces`, options)
+}
+
+/** 读取轨迹事件（可带过滤参数） */
+export function fetchTraceEvents(
+  projectId: string,
+  name: string,
+  params: TraceEventsParams = {},
+  options: ApiFetchOptions = {},
+): Promise<TraceEventsResponse> {
+  return apiFetch<TraceEventsResponse>(`/api/v1/projects/${projectId}/traces/${name}/events`, {
+    ...options,
+    params: { ...params },
+  })
+}
+
+/** 读取轨迹事件关联帧（PNG blob；ref 为 64 位 sha256） */
+export function fetchTraceFrame(
+  projectId: string,
+  name: string,
+  ref: string,
+  options: ApiFetchOptions = {},
+): Promise<Blob> {
+  return fetchBinary(`/api/v1/projects/${projectId}/traces/${name}/frame/${ref}`, options)
+}
+
+/** 读取资产内容（PNG/JPEG blob，用于资产库缩略图） */
+export function fetchAssetBytes(projectId: string, assetId: string, options: ApiFetchOptions = {}): Promise<Blob> {
+  return fetchBinary(`/api/v1/projects/${projectId}/assets/${assetId}/content`, options)
+}
+
+/** 列出项目 tests/replay 目录下的回放/差异报告 */
+export function listReplayReports(projectId: string, options: ApiFetchOptions = {}): Promise<ReplayReportsResponse> {
+  return apiFetch<ReplayReportsResponse>(`/api/v1/projects/${projectId}/replay-reports`, options)
+}
+
+/** 读取回放/差异报告全文 */
+export function fetchReplayReportContent(
+  projectId: string,
+  name: string,
+  options: ApiFetchOptions = {},
+): Promise<{ project_id: string; name: string; content: string; size_bytes: number }> {
+  return apiFetch(`/api/v1/projects/${projectId}/replay-reports/${name}/content`, options)
+}
+
+/** 读取工作区设置（文件缺失/损坏时后端回退安全默认值） */
+export function fetchSettings(options: ApiFetchOptions = {}): Promise<WorkbenchSettings> {
+  return apiFetch<WorkbenchSettings>('/api/v1/settings', options)
+}
+
+/** 局部更新工作区设置（受保护目标硬锁由后端 409 拒绝） */
+export function updateSettings(patch: Partial<WorkbenchSettings>, options: ApiFetchOptions = {}): Promise<WorkbenchSettings> {
+  return apiFetch<WorkbenchSettings>('/api/v1/settings', { ...options, method: 'PUT', body: patch })
 }
 
 // ---------------------------------------------------------------------------

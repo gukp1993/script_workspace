@@ -1,0 +1,13 @@
+# 运行策略：shadow 为硬编码安全基线（ADP-002）。
+# mode 与 unattended_schedule 不得修改：项目含受保护在线目标时，
+# real_input / enabled 会被 domain_model 校验器硬锁拒绝
+# （protected_online_no_real_input / protected_online_no_unattended）。
+schema_version: 1
+policy_id: default
+mode: shadow
+require_manual_start: true
+max_runtime_minutes: 20
+max_actions_per_minute: 60
+max_total_actions: 100
+on_focus_lost: stop
+unattended_schedule: disabled

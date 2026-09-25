@@ -197,6 +197,14 @@ def create_app(config: ControlPlaneConfig | None = None) -> FastAPI:
         return Response(content=data, media_type=media_type)
 
     # ------------------------------------------------------------------
+    # 轨迹/帧/回放报告（M3 E11：UI-014/015 数据源）——必须在 {kind} 通配路由
+    # 之前注册，否则 traces / replay-reports 会被当作对象种类
+    # ------------------------------------------------------------------
+    from control_plane.traces import register_trace_routes  # 局部导入：保持装配顺序清晰
+
+    register_trace_routes(app, config)
+
+    # ------------------------------------------------------------------
     # 领域对象 CRUD（CTL-003）
     # ------------------------------------------------------------------
 

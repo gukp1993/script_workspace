@@ -1,0 +1,11 @@
+# 运行策略：real_input 允许，但必须人工启动 + 保守限额（POL-002 / ADP-001）
+# 保守默认值，禁止放宽后再调高；确需放宽请在准入清单中给出依据。
+schema_version: 1
+policy_id: default
+mode: real_input
+require_manual_start: true
+max_runtime_minutes: 15
+max_actions_per_minute: 60
+max_total_actions: 200
+on_focus_lost: stop
+unattended_schedule: disabled

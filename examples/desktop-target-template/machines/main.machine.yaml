@@ -1,0 +1,30 @@
+# 主状态机：等待就绪 -> 单击 -> 断言变化 -> 停止（ADP-001 测试示例）
+# 迁移只引用本项目 detectors 已定义的感知字段（ready_button / progress_ratio）。
+# entry 的 mouse_click 是动作占位（结构），实际发送由策略闸门约束。
+schema_version: 1
+machine_id: main
+initial: idle
+states:
+  idle:
+    transitions:
+      - when: "ready_button.present"
+        to: click_start
+
+  click_start:
+    timeout_seconds: 15
+    entry:
+      - kind: mouse_click
+        point: "ready_button"
+    transitions:
+      - when: "progress_ratio.value > 0.3"
+        to: verify_change
+        on_timeout_to: stopped
+
+  verify_change:
+    timeout_seconds: 30
+    transitions:
+      - when: "progress_ratio.changed"
+        to: stopped
+
+  stopped:
+    terminal: true

@@ -1,0 +1,11 @@
+# 受保护在线目标：real_input=false（protected_online: true 硬锁派生）、
+# auto_reconnect=false（本项目不实现任何自动重连/保活，见 README）。
+schema_version: 1
+target_id: protected-online-app
+executable: PlaceholderOnlineApp.exe
+title_regex: '^Protected Online App'
+window_class: null
+protected_online: true
+allowed_display_modes:
+  - windowed
+notes: 受保护在线目标；仅允许观察、标注、回放与 Shadow Mode。

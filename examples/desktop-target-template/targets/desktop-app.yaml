@@ -1,0 +1,11 @@
+# 目标档案：普通桌面应用（占位可执行文件名，替换为真实目标）
+schema_version: 1
+target_id: desktop-app
+executable: TargetApp.exe
+title_regex: '^Target App'
+window_class: null
+protected_online: false
+allowed_display_modes:
+  - windowed
+  - borderless
+notes: 本地/离线/自有目标；启用真实输入前必须通过 ADP-003 准入清单。

@@ -1,0 +1,8 @@
+# 检测器示例：进度区域主色占比（color_region，替换 ROI 与期望色）
+schema_version: 1
+detector_id: progress-color
+type: color_region
+roi: [0.05, 0.80, 0.30, 0.15]
+threshold: 0.5
+stable_frames: 1
+field_name: progress_ratio

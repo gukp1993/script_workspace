@@ -1,0 +1,8 @@
+# 普通桌面应用目标模板（ADP-001，M5）
+# 面向本地/离线/自有/明确允许自动化的 Windows 桌面程序。
+# 使用前：把 TargetApp.exe / title_regex / 标定与检测器 ROI 替换为真实值，
+# 并完成 README 中的适配准入清单（ADP-003）逐项评审。
+schema_version: 1
+name: desktop-target-template
+description: 普通桌面应用目标模板（观察 + 受控真实输入，人工启动 + 保守预算）
+notes: 模板默认 executable 为占位符；真实输入仅在准入清单全部通过后启用。

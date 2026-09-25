@@ -1,0 +1,9 @@
+# 视觉资产清单：路径、类型、版本与内容哈希（SHA-256）
+# ready-button.png 为占位模板图；替换截图后必须同步更新 sha256。
+schema_version: 1
+assets:
+  - asset_id: asset-ready-button
+    path: assets/templates/ready-button.png
+    kind: template
+    version: 1
+    sha256: 5f5f058413ba9ee35c50352fbe822c7ea606729cbef95c4eacc18517b04ad888
