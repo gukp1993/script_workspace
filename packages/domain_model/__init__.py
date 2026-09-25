@@ -21,6 +21,29 @@ from domain_model.capabilities import (
     authorize_input,
     is_registered,
 )
+from domain_model.dsl import (
+    ACTION_KIND_CAPABILITY,
+    BinOp,
+    BoolLit,
+    CompiledAction,
+    CompiledAssertion,
+    CompiledMachine,
+    CompiledState,
+    CompiledTransition,
+    ExprAST,
+    ExprEval,
+    FieldRef,
+    NumberLit,
+    ParseError,
+    RetrySpec,
+    UnaryOp,
+    collect_field_refs,
+    compile_machine_dict,
+    compile_machine_yaml,
+    compile_state_machine,
+    parse_duration_seconds,
+    parse_expression,
+)
 from domain_model.errors import DomainModelError, DomainValidationError, Issue, join_pointer
 from domain_model.models import (
     SCHEMA_VERSION,
@@ -55,6 +78,12 @@ from domain_model.parsing import (
     parse_target,
 )
 from domain_model.schemas import SCHEMA_ID_PREFIX, SCHEMA_KINDS, load_schema, schema_path
+from domain_model.static_analysis import (
+    AnalysisIssue,
+    analyze,
+    ensure_compilable,
+    has_errors,
+)
 from domain_model.validation import (
     ValidationResult,
     validate_project_dir,
@@ -106,6 +135,33 @@ __all__ = [
     "is_registered",
     "authorize",
     "authorize_input",
+    # 条件表达式 DSL 与状态机编译（DOM-006 / FSM-001/002）
+    "ExprAST",
+    "NumberLit",
+    "BoolLit",
+    "FieldRef",
+    "UnaryOp",
+    "BinOp",
+    "ParseError",
+    "ExprEval",
+    "parse_expression",
+    "collect_field_refs",
+    "parse_duration_seconds",
+    "ACTION_KIND_CAPABILITY",
+    "RetrySpec",
+    "CompiledAction",
+    "CompiledAssertion",
+    "CompiledTransition",
+    "CompiledState",
+    "CompiledMachine",
+    "compile_state_machine",
+    "compile_machine_dict",
+    "compile_machine_yaml",
+    # 静态分析（DOM-007）
+    "AnalysisIssue",
+    "analyze",
+    "ensure_compilable",
+    "has_errors",
     # 错误
     "Issue",
     "DomainModelError",
