@@ -79,9 +79,17 @@ def http_firewall(
             return _deny(403, "forbidden_host", "Host 必须是本机回环地址")
         if not origin_is_allowed(request.headers.get("origin"), config.port):
             return _deny(403, "forbidden_origin", "Origin 不在允许列表")
-        if not token_matches(request.headers.get(TOKEN_HEADER), config.token or ""):
-            # 401 响应体不回显期望令牌等敏感细节（CTL-001）
-            return _deny(401, "unauthorized", "缺少或错误的访问令牌")
+        # 令牌只保护 API 路径：静态 SPA 资源（/assets、index.html）不含数据，
+        # 所有数据通道都在 /api/* 之下并逐一鉴权；WS 握手在端点内自校验。
+        if request.url.path.startswith("/api"):
+            provided = request.headers.get(TOKEN_HEADER)
+            if request.method == "GET":
+                # GET 兼容 ?token= 查询参数（与 WS 握手同约定）：浏览器首次
+                # 导航/加载页面时不带自定义请求头，桌面壳经该参数注入令牌。
+                provided = provided or request.query_params.get(TOKEN_QUERY)
+            if not token_matches(provided, config.token or ""):
+                # 401 响应体不回显期望令牌等敏感细节（CTL-001）
+                return _deny(401, "unauthorized", "缺少或错误的访问令牌")
         return await call_next(request)
 
     return dispatch

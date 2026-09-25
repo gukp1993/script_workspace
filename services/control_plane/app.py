@@ -278,6 +278,15 @@ def create_app(config: ControlPlaneConfig | None = None) -> FastAPI:
 
     register_preview_routes(app, config)
 
+    # SPA 静态页面（UI-001）：桌面壳默认加载 http://127.0.0.1:<port>/?token=...，
+    # 由后端直接服务 workbench_ui 构建产物。API 路由已全部注册在前，优先级高于
+    # 该 catch-all 挂载；静态资源不含敏感数据（页面自身凭 token 调 API）。
+    from starlette.staticfiles import StaticFiles  # 局部导入：缺失 dist 时无需该依赖
+
+    spa_dist = Path(__file__).resolve().parents[2] / "apps" / "workbench_ui" / "dist"
+    if (spa_dist / "index.html").is_file():
+        app.mount("/", StaticFiles(directory=str(spa_dist), html=True), name="spa")
+
     return app
 
 

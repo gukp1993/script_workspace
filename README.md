@@ -7,6 +7,35 @@
 > 真实输入仅用于本地/离线/自有/明确允许自动化的目标；受保护在线目标
 > 默认只允许观察、标注、回放与 Shadow Mode。详见 `docs/safety/`。
 
+## 快速启动
+
+要求：Windows 10/11 + Python 3.12（已 `pip install -r requirements.txt`）。
+
+```bash
+# 1) 桌面模式：一条命令起后端 + 工作台窗口（推荐）
+export PYTHONPATH="packages;services;apps"      # CMD: set PYTHONPATH=packages;services;apps
+python -m desktop_shell
+# 窗口标题「VAW 前台视觉自动化工作台」，令牌自动注入；关闭窗口即退出后端
+
+# 2) 浏览器模式：只起后端，用浏览器打开打印的地址
+python -m desktop_shell --backend-only --port 17653
+# 按提示带 token 访问，如 http://127.0.0.1:17653/?token=<控制台打印的令牌>
+
+# 3) 前端开发模式：Vite 热更新 + 后端
+cd apps/workbench_ui && npm install && npm run dev   # 终端 A
+python -m desktop_shell --dev http://localhost:5173  # 终端 B
+```
+
+配套演示：
+
+```bash
+python -m arena_lab.view happy_path      # ArenaLab 模拟器画面（本地测试目标）
+python -m arena_lab.e2e_smoke            # 真窗口采集 E2E 冒烟
+```
+
+> 安全：API 仅绑定 127.0.0.1 且要求令牌（页面经 `?token=` 注入，静态资源不含数据）；
+> 真实输入只在人工闸门确认后、且目标窗口/前台持续匹配时才会发出。
+
 ## 仓库结构（ENG-001）
 
 ```
