@@ -103,7 +103,13 @@ export const useProjectStore = defineStore('project', {
     selectProject(projectId: string): void {
       if (this.currentProjectId !== projectId) {
         this.currentProjectId = projectId
+        // 重新加载已打开过的对象种类：切换项目后，停留在原页面的视图
+        // 依赖本 store 的对象缓存，清空后必须立即重取，否则列表会一直是空的。
+        const loadedKinds = Object.keys(this.objects).filter(
+          (kind) => (this.objects[kind] ?? []).length > 0,
+        )
         this.objects = {}
+        for (const kind of loadedKinds) void this.loadObjects(kind)
       }
     },
     async loadObjects(kind: string, fetch: Fetcher = apiFetch): Promise<void> {
