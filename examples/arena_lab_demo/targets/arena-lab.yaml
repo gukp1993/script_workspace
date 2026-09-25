@@ -1,0 +1,11 @@
+# 目标档案：本地 ArenaLab 测试模拟器
+schema_version: 1
+target_id: arena-lab
+executable: ArenaLab.exe
+title_regex: '^ArenaLab - Training$'
+window_class: null
+protected_online: false
+allowed_display_modes:
+  - windowed
+  - borderless
+notes: 本地测试模拟器；允许观察、标注、回放与 Shadow Mode。

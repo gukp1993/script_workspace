@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/detector.schema.json",
+  "title": "检测器定义（detectors/*.yaml）",
+  "description": "算法类型、归一化 ROI、阈值、稳定帧与输出语义字段；ROI 越界（x+w>1 或 y+h>1）由校验器补充检查。",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "detector_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "项目内唯一检测器 ID。"
+    },
+    "type": {
+      "enum": ["template_match", "color_bar_ratio", "color_region", "change_stability", "ocr_roi"],
+      "description": "检测算法类型。"
+    },
+    "roi": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "minimum": 0, "maximum": 1, "description": "x（归一化）" },
+        { "type": "number", "minimum": 0, "maximum": 1, "description": "y（归一化）" },
+        { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "w（归一化，>0）" },
+        { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "h（归一化，>0）" }
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4,
+      "description": "归一化 ROI [x, y, w, h]。"
+    },
+    "threshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "判定阈值 0~1。"
+    },
+    "stable_frames": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "连续稳定帧数要求，>=1。"
+    },
+    "field_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "输出语义字段名（感知快照 values 的键）。"
+    },
+    "template": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\].*$",
+      "not": { "pattern": "(^|/)\\.\\.(/|$)" },
+      "description": "模板资产相对路径（不得越出项目根）。"
+    }
+  },
+  "required": ["schema_version", "detector_id", "type", "roi", "threshold", "stable_frames", "field_name"],
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "template_match" } } },
+      "then": { "required": ["template"] },
+      "else": { "properties": { "template": false } }
+    }
+  ],
+  "additionalProperties": false
+}

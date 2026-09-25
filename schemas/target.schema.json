@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/target.schema.json",
+  "title": "目标档案（targets/*.yaml）",
+  "description": "允许的目标程序与窗口匹配规则；protected_online 为安全硬锁标记。",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "target_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "项目内唯一目标 ID（kebab-case）。"
+    },
+    "executable": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$",
+      "description": "目标主程序文件名，不含路径分隔符。"
+    },
+    "title_regex": {
+      "type": "string",
+      "minLength": 1,
+      "description": "窗口标题匹配正则；必须可编译。"
+    },
+    "window_class": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "description": "可选的 Win32 窗口类名。"
+    },
+    "protected_online": {
+      "type": "boolean",
+      "description": "是否为受保护在线目标；true 时禁止 real_input 与无人值守调度。"
+    },
+    "allowed_display_modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["windowed", "borderless", "fullscreen"] },
+      "description": "允许运行的显示模式白名单。"
+    },
+    "notes": { "type": "string", "description": "备注。" }
+  },
+  "required": ["schema_version", "target_id", "executable", "title_regex", "protected_online", "allowed_display_modes"],
+  "additionalProperties": false
+}

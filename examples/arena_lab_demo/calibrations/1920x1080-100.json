@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "calibration_id": "1920x1080-100",
+  "resolution": "1920x1080",
+  "dpi_percent": 100,
+  "ui_scale": 1.0,
+  "anchors": {
+    "player_panel": [0.04, 0.92],
+    "health_bar": [0.04, 0.04]
+  }
+}

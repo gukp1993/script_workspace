@@ -1,0 +1,11 @@
+# 锁定的生产与开发依赖（ENG-002）
+# 安装：python -m pip install -r requirements.txt
+# 版本与本机开发环境一致，升级需走 ADR 与回归。
+
+numpy==2.3.5
+PyYAML==6.0.2
+jsonschema==4.26.0
+pillow==12.3.0
+pydantic==2.13.5
+opencv-python==5.0.0.93
+pytest==9.1.1

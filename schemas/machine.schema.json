@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/machine.schema.json",
+  "title": "状态机定义（machines/*.yaml）",
+  "description": "状态、迁移、entry/exit 动作占位与超时；可达性、无退出非终态与感知字段引用由校验器补充检查。",
+  "type": "object",
+  "$defs": {
+    "transition": {
+      "type": "object",
+      "properties": {
+        "when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "条件表达式字符串（M0 只存储不解析；仅允许白名单运算与感知字段）。"
+        },
+        "to": { "type": "string", "minLength": 1, "description": "迁移目标状态名。" },
+        "on_timeout_to": { "type": "string", "minLength": 1, "description": "超时迁移目标状态名。" }
+      },
+      "required": ["when", "to"],
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "minLength": 1, "description": "动作占位类型。" }
+      },
+      "required": ["kind"],
+      "additionalProperties": { "type": ["string", "number", "boolean", "null"] }
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" },
+          "description": "出边列表。"
+        },
+        "entry": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/action" },
+          "description": "进入动作占位（仅结构）。"
+        },
+        "exit": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/action" },
+          "description": "退出动作占位（仅结构）。"
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "状态超时秒数（>0）；非终态退出手段之一。"
+        },
+        "terminal": { "type": "boolean", "description": "是否终态；终态不要求出边。" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "schema_version": { "const": 1 },
+    "machine_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "项目内唯一状态机 ID。"
+    },
+    "initial": { "type": "string", "minLength": 1, "description": "初始状态名。" },
+    "states": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": { "$ref": "#/$defs/state" },
+      "description": "状态名 -> 状态定义。"
+    }
+  },
+  "required": ["schema_version", "machine_id", "initial", "states"],
+  "additionalProperties": false
+}

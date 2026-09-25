@@ -1,0 +1,10 @@
+# 违规策略：受保护在线目标却声明 real_input 模式（应被硬锁拒绝）
+schema_version: 1
+policy_id: default
+mode: real_input
+require_manual_start: true
+max_runtime_minutes: 20
+max_actions_per_minute: 60
+max_total_actions: 100
+on_focus_lost: stop
+unattended_schedule: disabled

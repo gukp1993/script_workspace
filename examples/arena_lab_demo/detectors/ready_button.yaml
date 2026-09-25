@@ -1,0 +1,9 @@
+# 检测器：Ready 按钮（模板匹配）
+schema_version: 1
+detector_id: ready_button
+type: template_match
+roi: [0.40, 0.78, 0.20, 0.12]
+threshold: 0.91
+stable_frames: 3
+field_name: ready
+template: assets/templates/ready.png

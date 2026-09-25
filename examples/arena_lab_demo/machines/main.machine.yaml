@@ -1,0 +1,28 @@
+# 主状态机：idle -> awaiting_manual_gate -> exercise -> stopped
+# 迁移只引用本项目 detectors 已定义的感知字段（ready / manual_gate / health_ratio）。
+schema_version: 1
+machine_id: main
+initial: idle
+states:
+  idle:
+    transitions:
+      - when: "ready.present"
+        to: awaiting_manual_gate
+
+  awaiting_manual_gate:
+    timeout_seconds: 30
+    entry:
+      - kind: manual_gate
+        message: "确认开始本地测试"
+    transitions:
+      - when: "manual_gate.present"
+        to: exercise
+        on_timeout_to: stopped
+
+  exercise:
+    transitions:
+      - when: "health_ratio.value < 0.20"
+        to: stopped
+
+  stopped:
+    terminal: true

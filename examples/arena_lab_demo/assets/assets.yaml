@@ -1,0 +1,13 @@
+# 视觉资产清单：路径、类型、版本与内容哈希（SHA-256）
+schema_version: 1
+assets:
+  - asset_id: asset-ready-button
+    path: assets/templates/ready.png
+    kind: template
+    version: 1
+    sha256: ff042736c954103f83bafde1090ed6d3fbc639e5102925f7255ac0e31ef08841
+  - asset_id: asset-gate-button
+    path: assets/templates/gate.png
+    kind: template
+    version: 1
+    sha256: e84c16fc4f6f6c686e1934860184d3e4ba52957d5dea395b92fa00096a51a996

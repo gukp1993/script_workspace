@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+
+# Node（后续 M1 workbench-ui）
+node_modules/
+dist/
+
+# 运行产物
+traces/*.jsonl
+*.log
+
+# IDE
+.idea/
+.vscode/

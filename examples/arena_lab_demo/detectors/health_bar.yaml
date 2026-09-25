@@ -1,0 +1,8 @@
+# 检测器：血条比例（颜色条占比）
+schema_version: 1
+detector_id: health_bar
+type: color_bar_ratio
+roi: [0.04, 0.04, 0.22, 0.025]
+threshold: 0.5
+stable_frames: 1
+field_name: health_ratio

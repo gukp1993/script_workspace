@@ -1,0 +1,10 @@
+# 运行策略：Shadow Mode + 人工启动 + 保守预算
+schema_version: 1
+policy_id: default
+mode: shadow
+require_manual_start: true
+max_runtime_minutes: 20
+max_actions_per_minute: 120
+max_total_actions: 600
+on_focus_lost: stop
+unattended_schedule: disabled

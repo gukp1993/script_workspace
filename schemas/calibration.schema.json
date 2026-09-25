@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/calibration.schema.json",
+  "title": "标定档案（calibrations/*）",
+  "description": "分辨率、DPI、UI 缩放与归一化锚点；锚点与 ROI 坐标一律归一化到 0~1。",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "calibration_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+      "description": "项目内唯一标定 ID，惯例形如 1920x1080-100。"
+    },
+    "resolution": {
+      "type": "string",
+      "pattern": "^[0-9]{2,5}x[0-9]{2,5}$",
+      "description": "分辨率字符串 <宽>x<高>。"
+    },
+    "dpi_percent": {
+      "type": "integer",
+      "minimum": 50,
+      "maximum": 500,
+      "description": "Windows DPI 缩放百分比。"
+    },
+    "ui_scale": {
+      "type": "number",
+      "minimum": 0.25,
+      "maximum": 4.0,
+      "description": "目标程序 UI 缩放系数。"
+    },
+    "anchors": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": {
+        "type": "array",
+        "prefixItems": [
+          { "type": "number", "minimum": 0, "maximum": 1 },
+          { "type": "number", "minimum": 0, "maximum": 1 }
+        ],
+        "items": false,
+        "minItems": 2,
+        "maxItems": 2,
+        "description": "归一化锚点 [x, y]。"
+      },
+      "description": "锚点名 -> [x, y]。"
+    }
+  },
+  "required": ["schema_version", "calibration_id", "resolution", "dpi_percent", "ui_scale"],
+  "additionalProperties": false
+}

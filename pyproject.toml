@@ -1,0 +1,18 @@
+[project]
+name = "visual-automation-workbench"
+version = "0.1.0"
+description = "可观察、可回放、可测试的 Windows 前台视觉自动化工作台"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+
+# 单仓多包约定（ENG-001）：
+#   packages/<pkg>/<pkg_name>/  -> import <pkg_name>
+#   services/<svc>/<svc_name>/  -> import <svc_name>
+#   apps/<app>/<app_name>/      -> import <app_name>
+# 包名即目录内同名 Python 包，由 pytest 的 pythonpath 统一注入。
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["packages", "services", "apps"]
+addopts = "-q"

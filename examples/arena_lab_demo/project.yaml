@@ -1,0 +1,6 @@
+# ArenaLab 本地测试模拟器示例项目（DOM-009）
+# 仅用于本地离线测试场；目标不是受保护在线目标。
+schema_version: 1
+name: arena_lab_demo
+description: ArenaLab 本地测试模拟器示例项目（观察 + Shadow Mode）
+notes: 全部感知与状态机仅针对本地 ArenaLab.exe；真实输入保持关闭。

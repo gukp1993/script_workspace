@@ -1,0 +1,6 @@
+# 反例项目：受保护在线目标 + real_input（SAFE-020）
+# 校验必须失败，错误包含规则 ID protected_online_no_real_input。
+schema_version: 1
+name: protected_online_demo
+description: 受保护在线目标反例：policy.mode 使用 real_input，必须被拒绝
+notes: 该项目仅用于测试校验器硬锁，不可作为真实项目模板。

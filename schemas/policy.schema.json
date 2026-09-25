@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/policy.schema.json",
+  "title": "运行策略（policies/*.yaml）",
+  "description": "模式、人工闸门、运行预算与无人值守开关；一切上限默认收紧。",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "项目内唯一策略 ID。"
+    },
+    "mode": {
+      "enum": ["observe", "shadow", "dry_run", "real_input"],
+      "description": "运行模式；real_input 受目标 protected_online 硬锁约束。"
+    },
+    "require_manual_start": {
+      "type": "boolean",
+      "description": "是否必须人工启动会话。"
+    },
+    "max_runtime_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440,
+      "description": "单次运行时长上限（分钟）。"
+    },
+    "max_actions_per_minute": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60000,
+      "description": "每分钟动作数上限。"
+    },
+    "max_total_actions": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "单次运行总动作数上限；null 表示沿用运行时默认。"
+    },
+    "on_focus_lost": {
+      "enum": ["stop"],
+      "description": "失焦行为；M0 只允许立即停止。"
+    },
+    "unattended_schedule": {
+      "enum": ["enabled", "disabled"],
+      "description": "无人值守调度开关；受保护在线目标必须 disabled。"
+    }
+  },
+  "required": ["schema_version", "policy_id", "mode", "require_manual_start", "max_runtime_minutes",
+               "max_actions_per_minute", "on_focus_lost", "unattended_schedule"],
+  "additionalProperties": false
+}

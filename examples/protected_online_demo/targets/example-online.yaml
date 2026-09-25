@@ -1,0 +1,10 @@
+# 受保护在线目标：不允许真实输入、不允许无人值守
+schema_version: 1
+target_id: example-online
+executable: SomeOnlineGame.exe
+title_regex: '^Some Online Game'
+window_class: null
+protected_online: true
+allowed_display_modes:
+  - windowed
+notes: 受保护在线目标；仅允许观察、标注、回放与 Shadow Mode。

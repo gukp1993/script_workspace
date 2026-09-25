@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaw.local/schemas/project.schema.json",
+  "title": "项目元数据（project.yaml）",
+  "description": "视觉自动化项目根清单：元数据与 Schema 版本锁定。",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+      "description": "项目名称，建议 kebab-case。"
+    },
+    "description": { "type": "string", "description": "项目描述。" },
+    "notes": { "type": "string", "description": "备注。" }
+  },
+  "required": ["schema_version", "name"],
+  "additionalProperties": false
+}

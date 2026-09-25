@@ -1,0 +1,9 @@
+# 检测器：手动闸门确认按钮（模板匹配）
+schema_version: 1
+detector_id: gate_button
+type: template_match
+roi: [0.42, 0.55, 0.16, 0.10]
+threshold: 0.88
+stable_frames: 2
+field_name: manual_gate
+template: assets/templates/gate.png
